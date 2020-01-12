@@ -4,6 +4,7 @@ from scrapy.shell import inspect_response
 import re      
 import calendar
 import itertools
+import base64
 
 MONTHS = [calendar.month_name[i] for i in range(1,13)]
 
@@ -43,6 +44,19 @@ BOOK_LISTS = [
     # "https://www.goodreads.com/book/show/8480952-the-river-of-shadows"
 ]
 
+def get_credentials(path):
+    '''
+    Reads a credential file and parses the credentials.
+    Credentials should be in format <username>:<password>, encoded in base64.
+
+    Returns (username, password)
+    '''
+    with open(path, 'r') as f:
+        credentials_encoded = f.read()
+    credentials = base64.b64decode(bytes(credentials_encoded, 'utf-8')).decode('utf-8')
+    username = credentials.split(':')[0]
+    password = credentials.split(':')[1:-1]
+    return (username, password)
 
 class GoodreadsSpider(scrapy.Spider):
     name = 'goodreads_spider'
@@ -50,12 +64,13 @@ class GoodreadsSpider(scrapy.Spider):
 
     def parse(self, response):
         token = response.xpath('//*[@name="authenticity_token"]/@value').extract_first()
-
+        username, password = get_credentials('.credentials')
         return FormRequest.from_response(response, 
             formdata={
-                    'authenticity_token' : token, 
-                    'user[email]': self.gr_username, 
-                    'user[password]': self.gr_password}, 
+                'authenticity_token' : token, 
+                'user[email]': username, 
+                'user[password]': password
+            }, 
             callback=self.scrape_after_login)
 
     def scrape_after_login(self, response):
@@ -114,8 +129,9 @@ class GoodreadsSpider(scrapy.Spider):
         details_text = ';;'.join(response.xpath('//div[contains(@id, "details")]//div[contains(@class, "row")]').getall())
         try:
             # A lot of possible formats of the defails sections
-            YEAR_REGEX = '(th|st|nd|rd|published|Published|%s) *\n? *(\d\d\d\d)' % ('|'.join(MONTHS))
-            year = re.search(YEAR_REGEX, details_text).group(2)
+            YEAR_REGEX = '(th|st|nd|rd|published|Published|%s) *\n? *(\d\d\d\
+                d)' % ('|'.join(MONTHS))
+            year = int(re.search(YEAR_REGEX, details_text).group(2))
             book_object['published'] = year
         except Exception as e:
             with open('errors.log', 'a') as fileerr:
