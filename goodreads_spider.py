@@ -59,9 +59,9 @@ class GoodreadsSpider(scrapy.Spider):
             callback=self.scrape_after_login)
 
     def scrape_after_login(self, response):
-        return (scrapy.Request(url, callback=self.scrape_pages) for url in BOOK_LISTS)
+        return (scrapy.Request(url, callback=self.scrape_book_list) for url in BOOK_LISTS)
 
-    def scrape_pages(self, response):
+    def scrape_book_list(self, response):
         BOOK_SET_SELECTORS = [
             # This one serves for shelves (e.g. /shelf/show/fantasy), but elementList class is in multiple places, so we also filter based on the parent
             '//div[contains(@class, "elementList") and not(parent::div/@id="myBooksResultsContents") and not(parent::div/@class="bigBoxContent containerWithHeaderContent")]', 
@@ -89,7 +89,7 @@ class GoodreadsSpider(scrapy.Spider):
             if not published_year:
                 yield scrapy.Request(
                     url=response.urljoin(book.css('.bookTitle::attr(href)').extract_first()),
-                    callback=self.scrape_details,
+                    callback=self.scrape_details_page,
                     meta={'book': result}
             )
             else:
@@ -101,10 +101,10 @@ class GoodreadsSpider(scrapy.Spider):
         if next_page:
             yield scrapy.Request(
                 response.urljoin(next_page),
-                callback = self.scrape_pages
+                callback = self.scrape_book_list
             )
 
-    def scrape_details(self, response):
+    def scrape_details_page(self, response):
         '''
         Parse the details page of a particular book and try to figure out the publish year
         '''
