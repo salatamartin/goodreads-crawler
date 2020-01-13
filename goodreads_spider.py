@@ -129,8 +129,7 @@ class GoodreadsSpider(scrapy.Spider):
         details_text = ';;'.join(response.xpath('//div[contains(@id, "details")]//div[contains(@class, "row")]').getall())
         try:
             # A lot of possible formats of the defails sections
-            YEAR_REGEX = '(th|st|nd|rd|published|Published|%s) *\n? *(\d\d\d\
-                d)' % ('|'.join(MONTHS))
+            YEAR_REGEX = '(th|st|nd|rd|published|Published|%s) *\n? *(\d\d\d\d)' % ('|'.join(MONTHS))
             year = int(re.search(YEAR_REGEX, details_text).group(2))
             book_object['published'] = year
         except Exception as e:
