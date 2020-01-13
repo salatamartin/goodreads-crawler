@@ -6,4 +6,4 @@ WORKDIR /workdir
 RUN pip3 install -r requirements.txt
 
 COPY . /workdir
-ENTRYPOINT [ "scrapy", "runspider", "src/goodreads_spider.py", "-o", "results/books.json"]
+ENTRYPOINT [ "scrapy", "runspider", "src/goodreads-spider.py", "-o", "results/books.json"]
