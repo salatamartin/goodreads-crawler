@@ -10,12 +10,6 @@ def write_data(data, path):
     with open('large_dedup_sorted.json', 'w', encoding='utf-8') as f:
         f.write(json.dumps(data))
 
-def reformat_years(data):
-    for d in data:
-        d['published'] = int(d['published'])   
-    return data 
-    
-
 def dedup_data(data):
     class ItemSet():
         def __init__(self):
@@ -39,9 +33,7 @@ def sort_data(data):
 
 def filter_data(path='results/books_raw.json'):
     raw_data = read_data(path)
-    data_reformated = reformat_years(raw_data)
-    write_data(data_reformated, 'results/books_cleaned.json')
-    data_dedup = dedup_data(data_reformated)
+    data_dedup = dedup_data(raw_data)
     write_data(data_dedup, 'results/books_cleaned_dedup.json')
     data_sorted = sort_data(data_dedup)
     write_data(data_sorted, 'results/books_cleaned_dedup_sorted.json')
