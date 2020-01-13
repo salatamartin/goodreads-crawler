@@ -5,7 +5,9 @@ import re
 import calendar
 import itertools
 import base64
+import os
 
+CRED_FILE_PATH = '.credentials'
 MONTHS = [calendar.month_name[i] for i in range(1,13)]
 
 # Starting pages for the crawler, all of these can contain "next pages" that will also be crawled
@@ -44,19 +46,13 @@ BOOK_LISTS = [
     # "https://www.goodreads.com/book/show/8480952-the-river-of-shadows"
 ]
 
-def get_credentials(path):
-    '''
-    Reads a credential file and parses the credentials.
-    Credentials should be in format <username>:<password>, encoded in base64.
 
-    Returns (username, password)
-    '''
-    with open(path, 'r') as f:
-        credentials_encoded = f.read()
-    credentials = base64.b64decode(bytes(credentials_encoded, 'utf-8')).decode('utf-8')
-    username = credentials.split(':')[0]
-    password = credentials.split(':')[1:-1]
-    return (username, password)
+
+def get_env_credentials():
+    return (os.environ.get('GR_USERNAME'), os.environ.get('GR_PASSWORD'))
+
+def get_credentials():
+    return get_env_credentials()
 
 class GoodreadsSpider(scrapy.Spider):
     name = 'goodreads_spider'
@@ -64,7 +60,7 @@ class GoodreadsSpider(scrapy.Spider):
 
     def parse(self, response):
         token = response.xpath('//*[@name="authenticity_token"]/@value').extract_first()
-        username, password = get_credentials('.credentials')
+        username, password = get_credentials()
         return FormRequest.from_response(response, 
             formdata={
                 'authenticity_token' : token, 
